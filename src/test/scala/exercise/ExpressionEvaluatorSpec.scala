@@ -74,4 +74,15 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert(evaluator.evaluateExpression("1-3 +4 /10*5") == 0)
     assert(evaluator.evaluateExpression("1-1*2-4*9+3*1-3+4+10/2") == -28)
   }
+
+  "it" should "fail for invalid expressions" in {
+    val evaluatorRef = TestActorRef[ExpressionEvaluator]
+    val evaluator = evaluatorRef.underlyingActor
+    assertThrows[MatchError](evaluator.evaluateExpression("1+"))
+    assertThrows[MatchError](evaluator.evaluateExpression("2+2-"))
+    assertThrows[MatchError](evaluator.evaluateExpression("* 21 - 11+ 432"))
+    assertThrows[MatchError](evaluator.evaluateExpression("2 - 7 + 3+2-1 /"))
+    assertThrows[MatchError](evaluator.evaluateExpression("**+/"))
+    assertThrows[MatchError](evaluator.evaluateExpression("1-*1*2-4*9+3*1-3+4+10/2"))
+  }
 }

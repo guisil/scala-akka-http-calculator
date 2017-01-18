@@ -9,7 +9,7 @@ class ExpressionManager extends Actor {
 
   private val expressionPatt = """((?:\s*(?:\-?\d+(?:\.\d+)*)\s*)(?:[\+\-\*\/](?:\s*(?:\-?\d+(?:\.\d+)*)\s*))*)"""
   private val parenthesisPatt = """\(""" + expressionPatt + """\)"""
-  private val expressionPattern = expressionPatt.r
+  private val expressionPattern = ("""^""" + expressionPatt + """$""").r
   private val parenthesisPattern = parenthesisPatt.r.unanchored
 
 

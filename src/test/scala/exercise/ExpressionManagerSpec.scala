@@ -61,4 +61,22 @@ class ExpressionManagerSpec extends FlatSpec with Matchers {
       result.length == 1 && result.contains("1-1*2-4*9+3*1-3+4+10/2")
     }
   }
+
+  "it" should "not match invalid expressions" in {
+    val managerRef = TestActorRef[ExpressionManager]
+    val manager = managerRef.underlyingActor
+
+    assert{
+      val result = manager.determineExpressionsToEvaluate("1-").toList
+      result.isEmpty
+    }
+    assert{
+      val result = manager.determineExpressionsToEvaluate("(1-2+)").toList
+      result.isEmpty
+    }
+    assert{
+      val result = manager.determineExpressionsToEvaluate("(1-2").toList
+      result.isEmpty
+    }
+  }
 }
