@@ -31,6 +31,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("2+8", "2+8")).value.get.get == EvaluationResult("2+8", 10))
     assert((evaluatorRef ? EvaluateExpression("11+ 432", "11+ 432")).value.get.get == EvaluationResult("11+ 432", 443))
     assert((evaluatorRef ? EvaluateExpression(" 7 + 3", " 7 + 3")).value.get.get == EvaluationResult(" 7 + 3", 10))
+    assert((evaluatorRef ? EvaluateExpression(" 7 * -3", " 7 * -3")).value.get.get == EvaluationResult(" 7 * -3", -21))
     assert((evaluatorRef ? EvaluateExpression("3+5 +2+ 9", "3+5 +2+ 9")).value.get.get == EvaluationResult("3+5 +2+ 9", 19))
   }
 
@@ -69,6 +70,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("2 - 7 + 3+2-1", "2 - 7 + 3+2-1")).value.get.get == EvaluationResult("2 - 7 + 3+2-1", -1))
     assert((evaluatorRef ? EvaluateExpression("200-4*10+5", "200-4*10+5")).value.get.get == EvaluationResult("200-4*10+5", 165))
     assert((evaluatorRef ? EvaluateExpression("1-3 +4 /10*5", "1-3 +4 /10*5")).value.get.get == EvaluationResult("1-3 +4 /10*5", 0))
+    assert((evaluatorRef ? EvaluateExpression("0.0*-34.0+3*19.0+10/5.0", "0.0*-34.0+3*19.0+10/5.0")).value.get.get == EvaluationResult("0.0*-34.0+3*19.0+10/5.0", 59))
     assert((evaluatorRef ? EvaluateExpression("1-1*2-4*9+3*1-3+4+10/2", "1-1*2-4*9+3*1-3+4+10/2")).value.get.get == EvaluationResult("1-1*2-4*9+3*1-3+4+10/2", -28))
   }
 

@@ -1,82 +1,55 @@
 package exercise
 
-import org.scalatest.{FlatSpec, Matchers}
-import akka.actor.ActorSystem
-import akka.testkit.TestActorRef
-import akka.util.Timeout
-import scala.concurrent.duration._
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import akka.actor.{ActorSystem, Props, Status}
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 
 /**
   * Created by guisil on 18/01/2017.
   */
-class ExpressionManagerSpec extends FlatSpec with Matchers {
+class ExpressionManagerSpec extends TestKit(ActorSystem("ExpressionManagerIntegrationSpec")) with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
-  implicit val system = ActorSystem()
-  implicit val timeout = Timeout(5 seconds)
+  private val listenerProbe = TestProbe()
+  private val expressionManagerRef = system.actorOf(Props(classOf[ExpressionManager], listenerProbe.ref), "expression-manager")
 
-  "An ExpressionManager" should "match expressions with parenthesis" in {
-    val managerRef = TestActorRef[ExpressionManager]
-    val manager = managerRef.underlyingActor
+  override def afterAll() {
+    TestKit.shutdownActorSystem(system)
+  }
 
-    assert{
-      val result = manager.determineExpressionsToEvaluate("(1)").toList
-      result.length == 1 && result.contains("(1)")
+
+  "An ExpressionManager" should {
+    "Send a message to the listener with the result of an expression containing parenthesis" in {
+      expectExpressionResultMessage("(1)", 1)
+      expectExpressionResultMessage("(1-1)*2", 0)
+      expectExpressionResultMessage("(1-1)*(2+4)", 0)
+      expectExpressionResultMessage("(1-1)*2+3*(1-3+4)+10/2", 11)
+      expectExpressionResultMessage("(1-1)*(2-4*9)+3*(3*5+4)+10/(3+2)", 59)
     }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("(1-1)*2").toList
-      result.length == 1 && result.contains("(1-1)")
+
+    "Send a message to the listener with the result of an expression not containing parenthesis" in {
+      expectExpressionResultMessage("1", 1)
+      expectExpressionResultMessage("1-1", 0)
+      expectExpressionResultMessage("1+4*2-3", 6)
+      expectExpressionResultMessage("1-1*2-4*9+3*1-3+4+10/2", -28)
     }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("(1-1)*(2+4)").toList
-      result.length == 2 && result.contains("(1-1)") && result.contains("(2+4)")
-    }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("(1-1)*2+3*(1-3+4)+10/2").toList
-      result.length == 2 && result.contains("(1-1)") && result.contains("(1-3+4)")
-    }
-    assert {
-      val result = manager.determineExpressionsToEvaluate("(1-1)*(2-4*9)+3*(1-3+4)+10/2").toList
-      result.length == 3 && result.contains("(1-1)") && result.contains("(2-4*9)") && result.contains("(1-3+4)")
+
+    "Send a message to the listener notifying a failure when the expression is invalid" in {
+      expressionManagerRef ! StartEvaluation("1-")
+      listenerProbe.expectMsgClass[Status.Failure](classOf[Status.Failure])
+
+      expressionManagerRef ! StartEvaluation("(1-2")
+      listenerProbe.expectMsgClass[Status.Failure](classOf[Status.Failure])
+
+      expressionManagerRef ! StartEvaluation("(1-2+")
+      listenerProbe.expectMsgClass[Status.Failure](classOf[Status.Failure])
+
+      expressionManagerRef ! StartEvaluation("1/0")
+      listenerProbe.expectMsgClass[Status.Failure](classOf[Status.Failure])
     }
   }
 
-  "it" should "match expressions without parenthesis" in {
-    val managerRef = TestActorRef[ExpressionManager]
-    val manager = managerRef.underlyingActor
-
-    assert{
-      val result = manager.determineExpressionsToEvaluate("1").toList
-      result.length == 1 && result.contains("1")
-    }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("1-1").toList
-      result.length == 1 && result.contains("1-1")
-    }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("1-1*2-4").toList
-      result.length == 1 && result.contains("1-1*2-4")
-    }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("1-1*2-4*9+3*1-3+4+10/2").toList
-      result.length == 1 && result.contains("1-1*2-4*9+3*1-3+4+10/2")
-    }
-  }
-
-  "it" should "not match invalid expressions" in {
-    val managerRef = TestActorRef[ExpressionManager]
-    val manager = managerRef.underlyingActor
-
-    assert{
-      val result = manager.determineExpressionsToEvaluate("1-").toList
-      result.isEmpty
-    }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("(1-2+)").toList
-      result.isEmpty
-    }
-    assert{
-      val result = manager.determineExpressionsToEvaluate("(1-2").toList
-      result.isEmpty
-    }
+  private def expectExpressionResultMessage(expression: String, expectedResult: Double): Unit = {
+    expressionManagerRef ! StartEvaluation(expression)
+    listenerProbe.expectMsg(EvaluationResult(expression, expectedResult))
   }
 }

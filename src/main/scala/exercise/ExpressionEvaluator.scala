@@ -8,10 +8,10 @@ import akka.actor.Actor
 class ExpressionEvaluator extends Actor {
 
   private val numberPattern = """(?:\s*(\-?\d+(?:\.\d+)*)\s*)""".r
-  private val addPattern = """(.+)\+(.+)""".r
-  private val subtractPattern = """(.+)\-(.+)""".r
-  private val multiplyPattern = """(.+)\*(.+)""".r
-  private val dividePattern = """(.+)\/(.+)""".r
+  private val addPattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\+((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
+  private val subtractPattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\-((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
+  private val multiplyPattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\*((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
+  private val dividePattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\/((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
 
 
   def evaluateExpression(expr: String): Double = expr match {

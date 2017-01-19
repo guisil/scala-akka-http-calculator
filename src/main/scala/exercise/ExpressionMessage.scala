@@ -5,5 +5,5 @@ package exercise
   */
 abstract class ExpressionMessage
 case class StartEvaluation(expression: String) extends ExpressionMessage
-case class EvaluateExpression(expression: String) extends ExpressionMessage
-case class EvaluationResult(expression: String, result: Double) extends ExpressionMessage
+case class EvaluateExpression(matchedExpression: String, expression: String) extends ExpressionMessage
+case class EvaluationResult(matchedExpression: String, result: Double) extends ExpressionMessage
