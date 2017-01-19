@@ -19,12 +19,13 @@ class ExpressionEvaluator extends Actor {
     case addPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) + evaluateExpression(y)}")
     case subtractPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) - evaluateExpression(y)}")
     case multiplyPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) * evaluateExpression(y)}")
-    case dividePattern(x, y) => evaluateExpression(s"${evaluateExpression(x) / evaluateExpression(y)}")
+    case dividePattern(x, y) if y != "0" => evaluateExpression(s"${evaluateExpression(x) / evaluateExpression(y)}")
+    case dividePattern(_, _) => throw new IllegalArgumentException("Division by zero")
   }
 
   override def receive = {
-    case EvaluateExpression(expression) =>
-      ???
-    case _ => ???
+    case EvaluateExpression(matchedExpression, expression) =>
+      println(s"ExpressionEvaluator received EvaluateExpression message with matched expression '${matchedExpression}' and expression '${expression}'")
+      sender() ! EvaluationResult(matchedExpression, evaluateExpression(expression))
   }
 }
