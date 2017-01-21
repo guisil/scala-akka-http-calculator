@@ -6,6 +6,7 @@ import akka.testkit.TestActorRef
 import akka.util.Timeout
 import akka.pattern.ask
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Created by guisil on 18/01/2017.
@@ -24,7 +25,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("394819.8", "394819.8")).value.get.get == EvaluationResult("394819.8", 394819.8))
   }
 
-  "it" should "evaluate addition expressions" in {
+  it should "evaluate addition expressions" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
     assert((evaluatorRef ? EvaluateExpression("(1+1)", "1+1")).value.get.get == EvaluationResult("(1+1)", 2))
     assert((evaluatorRef ? EvaluateExpression("1+1", "1+1")).value.get.get == EvaluationResult("1+1", 2))
@@ -35,7 +36,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("3+5 +2+ 9", "3+5 +2+ 9")).value.get.get == EvaluationResult("3+5 +2+ 9", 19))
   }
 
-  "it" should "evaluate subtraction expressions" in {
+  it should "evaluate subtraction expressions" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
     assert((evaluatorRef ? EvaluateExpression("1-1", "1-1")).value.get.get == EvaluationResult("1-1", 0))
     assert((evaluatorRef ? EvaluateExpression("2-8", "2-8")).value.get.get == EvaluationResult("2-8", -6))
@@ -44,7 +45,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("5-2 - 10 -1", "5-2 - 10 -1")).value.get.get == EvaluationResult("5-2 - 10 -1", -8))
   }
 
-  "it" should "evaluate multiplication expressions" in {
+  it should "evaluate multiplication expressions" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
     assert((evaluatorRef ? EvaluateExpression("1*1","1*1")).value.get.get == EvaluationResult("1*1", 1))
     assert((evaluatorRef ? EvaluateExpression("2*8", "2*8")).value.get.get == EvaluationResult("2*8", 16))
@@ -53,7 +54,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("2*4 * 10* 3", "2*4 * 10* 3")).value.get.get == EvaluationResult("2*4 * 10* 3", 240))
   }
 
-  "it" should "evaluate division expressions" in {
+  it should "evaluate division expressions" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
     assert((evaluatorRef ? EvaluateExpression("3/1", "3/1")).value.get.get == EvaluationResult("3/1", 3))
     assert((evaluatorRef ? EvaluateExpression("8/4", "8/4")).value.get.get == EvaluationResult("8/4", 2))
@@ -62,7 +63,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("140/2 / 7 /5", "140/2 / 7 /5")).value.get.get == EvaluationResult("140/2 / 7 /5", 2))
   }
 
-  "it" should "evaluate expressions containing mixed operations" in {
+  it should "evaluate expressions containing mixed operations" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
     assert((evaluatorRef ? EvaluateExpression("1+1-2", "1+1-2")).value.get.get == EvaluationResult("1+1-2", 0))
     assert((evaluatorRef ? EvaluateExpression("2+8-1", "2+8-1")).value.get.get == EvaluationResult("2+8-1", 9))
@@ -74,7 +75,7 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assert((evaluatorRef ? EvaluateExpression("1-1*2-4*9+3*1-3+4+10/2", "1-1*2-4*9+3*1-3+4+10/2")).value.get.get == EvaluationResult("1-1*2-4*9+3*1-3+4+10/2", -28))
   }
 
-  "it" should "fail for invalid expressions" in {
+  it should "fail for invalid expressions" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
     assertThrows[MatchError](evaluatorRef.receive(EvaluateExpression("1+", "1+")))
     assertThrows[MatchError](evaluatorRef.receive(EvaluateExpression("2+2-", "2+2-")))
@@ -84,9 +85,8 @@ class ExpressionEvaluatorSpec extends FlatSpec with Matchers {
     assertThrows[MatchError](evaluatorRef.receive(EvaluateExpression("1-*1*2-4*9+3*1-3+4+10/2", "1-*1*2-4*9+3*1-3+4+10/2")))
   }
 
-  "it" should "fail for division by zero" in {
+  it should "fail for division by zero" in {
     val evaluatorRef = TestActorRef[ExpressionEvaluator]
-    val evaluator = evaluatorRef.underlyingActor
-    assertThrows[IllegalArgumentException](evaluator.evaluateExpression("1/0"))
+    assertThrows[IllegalArgumentException](evaluatorRef.receive(EvaluateExpression("1/0", "1/0")))
   }
 }

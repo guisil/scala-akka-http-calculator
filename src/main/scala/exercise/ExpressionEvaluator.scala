@@ -14,7 +14,7 @@ class ExpressionEvaluator extends Actor {
   private val dividePattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\/((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
 
 
-  def evaluateExpression(expr: String): Double = expr match {
+  private def evaluateExpression(expr: String): Double = expr match {
     case numberPattern(x) => x.toDouble
     case addPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) + evaluateExpression(y)}")
     case subtractPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) - evaluateExpression(y)}")
