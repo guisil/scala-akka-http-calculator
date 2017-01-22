@@ -1,0 +1,2 @@
+Code created as an exercise. It is a HTTP-based microservice implemented in Scala/Akka.
+It should process a POST request containing an expression to be calculated (JSON object: '{"expression":"1-2+(4*3)-4/2"}') and return the result (JSON object: '{"result": 9}') or a validation error.
