@@ -8,18 +8,11 @@ import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props}
   */
 class ExpressionManager extends Actor {
 
-  private val expressionPatt = """((?:\s*(?:\-?\d+(?:\.\d+)*)\s*)(?:[\+\-\*\/](?:\s*(?:\-?\d+(?:\.\d+)*)\s*))*)"""
-  private val parenthesisPatt = """\(""" + expressionPatt + """\)"""
-  private val expressionPattern = ("""^""" + expressionPatt + """$""").r
-  private val parenthesisPattern = parenthesisPatt.r.unanchored
-  private val numberPattern = """^(?:\s*(\-?\d+(?:\.\d+)*)\s*)$""".r
-
   private var originalExpression = ""
   private var currentExpression = ""
   private var expressionsBeingCalculated = 0
 
   private var originalSenderRef: ActorRef = _
-
 
   override val supervisorStrategy = OneForOneStrategy() {
     case e: IllegalArgumentException =>
@@ -32,18 +25,21 @@ class ExpressionManager extends Actor {
 
 
   private def determineExpressionsToEvaluate(expression: String) =  {
-    val withParenthesis = parenthesisPattern.findAllIn(expression)
-    if (withParenthesis.isEmpty) expressionPattern.findAllIn(expression)
-    else withParenthesis
+    val withParenthesis = parenthesisExpressionPattern.findAllIn(expression)
+    if (withParenthesis.isEmpty) {
+      val addSubtractOnly = addOrSubtractWholeExpressionPattern.findAllIn(expression)
+      if (addSubtractOnly.isEmpty) multiplyOrDivideExpressionPattern.findAllIn(expression)
+      else addSubtractOnly
+    } else withParenthesis
   }
 
   private def isCompleted(expression: String) = expression match {
-    case numberPattern(_) => true
+    case numberExpressionPattern(_) => true
     case _ => false
   }
 
   private def getResult(expression: String) = expression match {
-    case numberPattern(x) => x.toDouble
+    case numberExpressionPattern(x) => x.replaceAll(parenthesisPat, "").toDouble
   }
 
   private def triggerExpressionEvaluation(expression: String) = {
@@ -59,17 +55,24 @@ class ExpressionManager extends Actor {
     originalSenderRef ! e
   }
 
+  private def prepareValueForExpression(value: Double) = if (value < 0) s"($value)" else value.toString
+
+
   override def receive = {
     case StartEvaluation(expression) =>
       println(s"ExpressionManager received StartEvaluation message with expression '${expression}', expressions being calculated: ${expressionsBeingCalculated}")
       originalExpression = expression
-      currentExpression = expression
+      currentExpression = expression.filter(!_.isSpaceChar)
       originalSenderRef = sender()
-      triggerExpressionEvaluation(expression)
+      if (isCompleted(currentExpression)) {
+        originalSenderRef ! EvaluationResult(originalExpression, getResult(currentExpression))
+      } else {
+        triggerExpressionEvaluation(currentExpression)
+      }
 
     case EvaluationResult(expression, result) =>
       println(s"ExpressionManager received EvaluationResult message with expression '${expression}' and result '${result}', expressions being calculated: ${expressionsBeingCalculated}")
-      currentExpression = currentExpression.replace(expression, result.toString)
+      currentExpression = currentExpression.replace(expression, prepareValueForExpression(result))
       expressionsBeingCalculated -= 1
       if (expressionsBeingCalculated == 0) {
         if (isCompleted(currentExpression)) {

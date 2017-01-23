@@ -23,6 +23,7 @@ class ExpressionManagerSpec extends TestKit(ActorSystem("ExpressionManagerIntegr
       expectExpressionResultMessage("(1-1)*(2+4)", 0)
       expectExpressionResultMessage("(1-1)*2+3*(1-3+4)+10/2", 11)
       expectExpressionResultMessage("(1-1)*(2-4*9)+3*(3*5+4)+10/(3+2)", 59)
+      expectExpressionResultMessage("(1-2)*(2-4*9)+3*(3*5+4)+10/(3+2)", 93)
     }
 
     "Reply with the result of an expression not containing parenthesis" in {

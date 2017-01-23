@@ -7,21 +7,15 @@ import akka.actor.Actor
   */
 class ExpressionEvaluator extends Actor {
 
-  private val numberPattern = """(?:\s*(\-?\d+(?:\.\d+)*)\s*)""".r
-  private val addPattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\+((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
-  private val subtractPattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\-((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
-  private val multiplyPattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\*((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
-  private val dividePattern = """(.*(?:\s*(?:\-?\d+(?:\.\d+)*)\s*))\/((?:\s*(?:\-?\d+(?:\.\d+)*)\s*).*)""".r
-
-
   private def evaluateExpression(expr: String): Double = expr match {
-    case numberPattern(x) => x.toDouble
-    case addPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) + evaluateExpression(y)}")
-    case subtractPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) - evaluateExpression(y)}")
-    case multiplyPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) * evaluateExpression(y)}")
-    case dividePattern(x, y) if y != "0" => evaluateExpression(s"${evaluateExpression(x) / evaluateExpression(y)}")
-    case dividePattern(_, _) => throw new IllegalArgumentException("Division by zero")
+    case numberExpressionPattern(x) => x.replaceAll(parenthesisPat, "").toDouble + 0.0
+    case addExpressionPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) + evaluateExpression(y)}")
+    case subtractExpressionPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) - evaluateExpression(y)}")
+    case multiplyExpressionPattern(x, y) => evaluateExpression(s"${evaluateExpression(x) * evaluateExpression(y)}")
+    case divideExpressionPattern(x, y) if y != "0" => evaluateExpression(s"${evaluateExpression(x) / evaluateExpression(y)}")
+    case divideExpressionPattern(_, _) => throw new IllegalArgumentException("Division by zero")
   }
+
 
   override def receive = {
     case EvaluateExpression(matchedExpression, expression) =>
