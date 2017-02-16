@@ -1,7 +1,7 @@
 package exercise
 
 import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props}
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, SupervisorStrategy}
 
 /**
   * Created by guisil on 18/01/2017.
@@ -14,7 +14,7 @@ class ExpressionManager extends Actor {
 
   private var originalSenderRef: ActorRef = _
 
-  override val supervisorStrategy = OneForOneStrategy() {
+  override val supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
     case e: IllegalArgumentException =>
       notifyFailure(e)
       Stop
@@ -25,27 +25,27 @@ class ExpressionManager extends Actor {
 
 
   private def determineExpressionsToEvaluate(expression: String) =  {
-    val withParenthesis = parenthesisExpressionPattern.findAllIn(expression)
+    val withParenthesis = ParenthesisExpressionPattern.findAllIn(expression)
     if (withParenthesis.isEmpty) {
-      val addSubtractOnly = addOrSubtractWholeExpressionPattern.findAllIn(expression)
-      if (addSubtractOnly.isEmpty) multiplyOrDivideExpressionPattern.findAllIn(expression)
+      val addSubtractOnly = AddOrSubtractWholeExpressionPattern.findAllIn(expression)
+      if (addSubtractOnly.isEmpty) MultiplyOrDivideExpressionPattern.findAllIn(expression)
       else addSubtractOnly
     } else withParenthesis
   }
 
   private def isCompleted(expression: String) = expression match {
-    case numberExpressionPattern(_) => true
+    case NumberExpressionPattern(_) => true
     case _ => false
   }
 
   private def getResult(expression: String) = expression match {
-    case numberExpressionPattern(x) => x.replaceAll(parenthesisPat, "").toDouble
+    case NumberExpressionPattern(x) => x.replaceAll(ParenthesisPat, "").toDouble
   }
 
   private def triggerExpressionEvaluation(expression: String) = {
     val expressionsToEvaluate = determineExpressionsToEvaluate(expression)
     if (expressionsToEvaluate.isEmpty) notifyFailure(new IllegalArgumentException("Illegal expression"))
-    for (exp <- expressionsToEvaluate) {
+    expressionsToEvaluate.foreach { exp =>
       context.actorOf(Props[ExpressionEvaluator]) ! EvaluateExpression(exp, exp.replaceAll("""\(|\)""", ""))
       expressionsBeingCalculated += 1
     }
@@ -58,9 +58,10 @@ class ExpressionManager extends Actor {
   private def prepareValueForExpression(value: Double) = if (value < 0) s"($value)" else value.toString
 
 
-  override def receive = {
+  override def receive: Receive = {
     case StartEvaluation(expression) =>
-      println(s"ExpressionManager received StartEvaluation message with expression '${expression}', expressions being calculated: ${expressionsBeingCalculated}")
+      println(s"ExpressionManager received StartEvaluation message with expression '$expression'," +
+        s" expressions being calculated: $expressionsBeingCalculated")
       originalExpression = expression
       currentExpression = expression.filter(!_.isSpaceChar)
       originalSenderRef = sender()
@@ -71,7 +72,8 @@ class ExpressionManager extends Actor {
       }
 
     case EvaluationResult(expression, result) =>
-      println(s"ExpressionManager received EvaluationResult message with expression '${expression}' and result '${result}', expressions being calculated: ${expressionsBeingCalculated}")
+      println(s"ExpressionManager received EvaluationResult message with expression '$expression' and result '$result'," +
+        s" expressions being calculated: $expressionsBeingCalculated")
       currentExpression = currentExpression.replace(expression, prepareValueForExpression(result))
       expressionsBeingCalculated -= 1
       if (expressionsBeingCalculated == 0) {

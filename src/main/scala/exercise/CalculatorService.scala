@@ -5,11 +5,12 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.pattern.ask
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
-import spray.json.DefaultJsonProtocol
+import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
@@ -24,8 +25,8 @@ final case class ResultContainer(result: Double)
 
 
 trait ExpressionJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val expressionFormat = jsonFormat1(ExpressionContainer)
-  implicit val resultFormat = jsonFormat1(ResultContainer)
+  implicit val expressionFormat: RootJsonFormat[ExpressionContainer] = jsonFormat1(ExpressionContainer)
+  implicit val resultFormat: RootJsonFormat[ResultContainer] = jsonFormat1(ResultContainer)
 }
 
 
@@ -37,7 +38,8 @@ trait Service extends ExpressionJsonSupport {
 
   val expressionManager: ActorRef
 
-  val route = {
+
+  val route: Route = {
 
     implicit val timeout = Timeout(5 seconds)
 
@@ -59,7 +61,7 @@ trait Service extends ExpressionJsonSupport {
 
 }
 
-object CalculatorService extends App with Service {
+object CalculatorService extends App with Service with CorsSupport {
 
   val host = "localhost"
   val port = 5555
@@ -70,8 +72,7 @@ object CalculatorService extends App with Service {
 
   override val expressionManager = system.actorOf(Props(classOf[ExpressionManager]), "expression-manager")
 
-  val bindingFuture = Http().bindAndHandle(route, host, port)
-
+  val bindingFuture = Http().bindAndHandle(corsHandler(route), host, port)
 
   println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
   StdIn.readLine()

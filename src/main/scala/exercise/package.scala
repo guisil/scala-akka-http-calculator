@@ -1,27 +1,31 @@
+import scala.util.matching.Regex
 
 /**
   * Created by guisil on 23/01/2017.
   */
 package object exercise {
 
-  val parenthesisPat = """\(|\)"""
+  val ParenthesisPat: String = """\(|\)"""
 
-  val baseNumberPat = """\-?\d+(?:\.\d+)*"""
-  val baseNumberWithParenthesisPat = """\(""" + baseNumberPat + """\)"""
+  val BaseNumberPat: String = """\-?\d+(?:\.\d+)*"""
+  val BaseNumberWithParenthesisPat: String = """\(""" + BaseNumberPat + """\)"""
 
-  val numberPat = baseNumberPat + """|""" + baseNumberWithParenthesisPat
+  val NumberPat: String = BaseNumberPat + """|""" + BaseNumberWithParenthesisPat
 
-  val numberExpressionPattern = ("""(""" + numberPat + """)""").r
+  val NumberExpressionPattern: Regex = ("""(""" + NumberPat + """)""").r
 
-  val addExpressionPattern = ("""(.*(?:""" + numberPat + """))\+((?:""" + numberPat + """).*)""").r
-  val subtractExpressionPattern = ("""(.*(?:""" + numberPat + """))\-((?:""" + numberPat + """).*)""").r
-  val multiplyExpressionPattern = ("""(.*(?:""" + numberPat + """))\*((?:""" + numberPat + """).*)""").r
-  val divideExpressionPattern = ("""(.*(?:""" + numberPat + """))\/((?:""" + numberPat + """).*)""").r
+  val AddExpressionPattern: Regex = ("""(.*(?:""" + NumberPat + """))\+((?:""" + NumberPat + """).*)""").r
+  val SubtractExpressionPattern: Regex = ("""(.*(?:""" + NumberPat + """))\-((?:""" + NumberPat + """).*)""").r
+  val MultiplyExpressionPattern: Regex = ("""(.*(?:""" + NumberPat + """))\*((?:""" + NumberPat + """).*)""").r
+  val DivideExpressionPattern: Regex = ("""(.*(?:""" + NumberPat + """))\/((?:""" + NumberPat + """).*)""").r
 
-  val baseNumberInLongerExpressionPat = """\d+(?:\.\d+)*"""
-  val numberInLongerExpressionPat = baseNumberInLongerExpressionPat + """|""" + baseNumberWithParenthesisPat
+  val BaseNumberInLongerExpressionPat: String = """\d+(?:\.\d+)*"""
+  val NumberInLongerExpressionPat: String = BaseNumberInLongerExpressionPat + """|""" + BaseNumberWithParenthesisPat
 
-  val parenthesisExpressionPattern = ("""\((""" + """(?:""" + numberInLongerExpressionPat + """)""" + """(?:[\+\-\*\/]""" + """(?:""" + numberInLongerExpressionPat + """))+)\)""").r
-  val multiplyOrDivideExpressionPattern = ("""(""" + """(?:""" + numberInLongerExpressionPat + """)""" + """(?:[\*\/]""" + """(?:""" + numberInLongerExpressionPat + """))+)""").r
-  val addOrSubtractWholeExpressionPattern = ("""^(""" + """(?:""" + numberInLongerExpressionPat + """)""" + """(?:[\+\-]""" + """(?:""" + numberInLongerExpressionPat + """))+)$""").r
+  val ParenthesisExpressionPattern: Regex = ("""\((""" + """(?:""" + NumberInLongerExpressionPat + """)""" +
+    """(?:[\+\-\*\/]""" + """(?:""" + NumberInLongerExpressionPat + """))+)\)""").r
+  val MultiplyOrDivideExpressionPattern: Regex = ("""(""" + """(?:""" + NumberInLongerExpressionPat + """)""" +
+    """(?:[\*\/]""" + """(?:""" + NumberInLongerExpressionPat + """))+)""").r
+  val AddOrSubtractWholeExpressionPattern: Regex = ("""^(""" + """(?:""" + NumberInLongerExpressionPat + """)""" +
+    """(?:[\+\-]""" + """(?:""" + NumberInLongerExpressionPat + """))+)$""").r
 }
